@@ -1,0 +1,12 @@
+# WordPress
+wp-content/*
+wp-config.php
+
+# Node/Vendor directories
+node_modules/
+vendor/
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+*.log
