@@ -6,6 +6,7 @@
 
 defined('ABSPATH') || exit;
 require_once SMARTGRID_PATH . 'includes/class-smartgrid-admin.php';
+require_once SMARTGRID_PATH . 'includes/class-smartgrid-frontend.php';
 
 /**
  * SmartGrid_Loader
@@ -33,6 +34,7 @@ class SmartGrid_Loader
         if (is_admin()) {
             new SmartGrid_Admin();
         }
+        new SmartGrid_Frontend();
     }
 
     /**
