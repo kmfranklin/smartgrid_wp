@@ -18,6 +18,10 @@ class SmartGrid_Frontend
   {
     add_shortcode('smartgrid', [$this, 'shortcode_callback']);
     add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
+
+    // AJAX endpoints for both logged-in and public users
+    add_action('wp_ajax_smartgrid_fetch', [$this, 'fetch_grid_items']);
+    add_action('wp_ajax_nopriv_smartgrid_fetch', [$this, 'fetch_grid_items']);
   }
 
   /**
@@ -79,5 +83,50 @@ class SmartGrid_Frontend
       'smartgridVars',
       ['ajax_url' => admin_url('admin-ajax.php')]
     );
+  }
+
+  /**
+   * AJAX callback: query posts and return rendered HTML.
+   */
+  public function fetch_grid_items()
+  {
+    // 1) Sanitize & get grid ID
+    $grid_id = isset($_REQUEST['grid_id']) ? absint($_REQUEST['grid_id']) : 0;
+    if (! $grid_id) {
+      wp_send_json_error('Invalid grid ID.');
+    }
+
+    // 2) Load the saved post type from meta
+    $post_type = get_post_meta($grid_id, 'smartgrid_post_type', true);
+    if (! $post_type) {
+      wp_send_json_error('No post type configured.');
+    }
+
+    // 3) Build a WP_Query
+    $query = new WP_Query([
+      'post_type'     => $post_type,
+      'posts_per_page' => 10,
+    ]);
+
+    // 4) Render each item using a template part
+    ob_start();
+    if ($query->have_posts()) {
+      echo '<div class="smartgrid-items">';
+      while ($query->have_posts()) {
+        $query->the_post();
+        printf(
+          '<div class="smartgrid-item"><a href="%1$s">%2$s</a></div>',
+          esc_url(get_permalink()),
+          esc_html(get_the_title())
+        );
+      }
+      echo '</div>';
+    } else {
+      echo '<p>' . esc_html__('No items found.', 'smartgrid') . '</p>';
+    }
+    wp_reset_postdata();
+
+    $html = ob_get_clean();
+    wp_send_json_success(['html' => $html]);
   }
 }

@@ -1,5 +1,0 @@
-// .vscode/settings.json
-{
-  "intelephense.environment.includePaths": ["/path/to/your/local/wp-install/wp-includes", "/path/to/your/local/wp-install/wp-admin"],
-  "intelephense.files.maxSize": 5000000
-}
