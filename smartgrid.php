@@ -17,6 +17,6 @@ define('SMARTGRID_URL', plugin_dir_url(__FILE__));
 require_once SMARTGRID_PATH . 'includes/class-smartgrid-loader.php';
 
 add_action('plugins_loaded', function () {
-  $loader = new SmartGrid_Loader();
-  $loader->run();
+    $loader = new SmartGrid_Loader();
+    $loader->run();
 });
