@@ -86,6 +86,30 @@ class SmartGrid_Frontend
   }
 
   /**
+   * Retrieve the list of meta fields configured for this grid.
+   *
+   * @param int $grid_id
+   * @return string[]  Array of meta field keys (or empty array).
+   */
+  protected function get_grid_meta_fields($grid_id)
+  {
+    $meta = get_post_meta($grid_id, 'smartgrid_meta_fields', true);
+    return is_array($meta) ? $meta : [];
+  }
+
+  /**
+   * Retrieve the list of taxonomies configured for this grid.
+   *
+   * @param int $grid_id
+   * @return string[]  Array of taxonomy slugs (or empty array).
+   */
+  protected function get_grid_taxonomy_filters($grid_id)
+  {
+    $tax = get_post_meta($grid_id, 'smartgrid_taxonomies', true);
+    return is_array($tax) ? $tax : [];
+  }
+
+  /**
    * AJAX callback: query posts and return rendered HTML.
    */
   public function fetch_grid_items()
@@ -114,12 +138,23 @@ class SmartGrid_Frontend
       echo '<div class="smartgrid-items">';
       while ($query->have_posts()) {
         $query->the_post();
-        printf(
-          '<div class="smartgrid-item"><a href="%1$s">%2$s</a></div>',
-          esc_url(get_permalink()),
-          esc_html(get_the_title())
-        );
+
+        // Determine template hierarchy
+        $template = locate_template('smartgrid/grid-item.php');
+        if (! $template) {
+          $template = SMARTGRID_PATH . 'templates/grid-item.php';
+        }
+
+        // Prepare variables for the template
+        set_query_var('post',       get_post());
+        set_query_var('grid_id',    $grid_id);
+        set_query_var('item_meta',  $this->get_grid_meta_fields($grid_id));
+        set_query_var('item_terms', $this->get_grid_taxonomy_filters($grid_id));
+
+        // Load the template
+        include $template;
       }
+
       echo '</div>';
     } else {
       echo '<p>' . esc_html__('No items found.', 'smartgrid') . '</p>';
