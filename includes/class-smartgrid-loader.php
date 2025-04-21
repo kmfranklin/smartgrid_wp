@@ -5,6 +5,7 @@
  */
 
 defined('ABSPATH') || exit;
+require_once SMARTGRID_PATH . 'includes/class-smartgrid-admin.php';
 
 class SmartGrid_Loader
 {
@@ -13,6 +14,10 @@ class SmartGrid_Loader
   {
     add_action('init', [$this, 'register_grid_config']);
     add_action('admin_menu', [$this, 'admin_menu']);
+
+    if (is_admin()) {
+      new SmartGrid_Admin();
+    }
   }
 
   public function register_grid_config()
