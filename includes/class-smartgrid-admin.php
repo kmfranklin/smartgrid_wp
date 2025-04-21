@@ -20,6 +20,7 @@ class SmartGrid_Admin
     public function __construct()
     {
         add_action('add_meta_boxes', [$this, 'add_grid_meta_boxes']);
+        add_action('add_meta_boxes', [$this, 'add_shortcode_metabox'], 20);
         add_action('save_post_smartgrid', [$this, 'save_grid_meta'], 10, 2);
     }
 
@@ -94,5 +95,33 @@ class SmartGrid_Admin
         // Sanitize and save
         $pt = sanitize_text_field($_POST['smartgrid_post_type'] ?? '');
         update_post_meta($post_id, 'smartgrid_post_type', $pt);
+    }
+
+    /**
+     * Register a metabox to display the copy-able shortcode.
+     */
+    public function add_shortcode_metabox()
+    {
+        add_meta_box(
+            'smartgrid_shortcode',
+            __('Shortcode', 'smartgrid'),
+            [$this, 'render_shortcode_box'],
+            'smartgrid',
+            'side',
+            'high'
+        );
+    }
+
+    /**
+     * Render the shortcode input.
+     * 
+     * @param WP_Post $post
+     */
+    public function render_shortcode_box($post)
+    {
+        $shortcode = sprintf('[smartgrid id="%d"]', $post->ID);
+        echo '<input type="text" readonly style="width:100%;font-family:monospace;" value="'
+            . esc_attr($shortcode)
+            . '" onclick="this.select();" />';
     }
 }
