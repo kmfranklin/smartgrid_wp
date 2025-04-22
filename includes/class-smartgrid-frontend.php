@@ -47,7 +47,8 @@ class SmartGrid_Frontend
     return sprintf(
       '<div class="smartgrid-container" data-grid-id="%1$d">' .
         '<div class="smartgrid-loading">%2$s</div>' .
-        '</div>',
+        '</div>' .
+        '<div class=smartgrid-load-more-wrap></div>',
       $grid_id,
       esc_html__('Loading grid…', 'smartgrid')
     );
@@ -116,6 +117,7 @@ class SmartGrid_Frontend
   {
     // 1) Sanitize & get grid ID
     $grid_id = isset($_REQUEST['grid_id']) ? absint($_REQUEST['grid_id']) : 0;
+    $paged = isset($_REQUEST['paged']) ? absint($_REQUEST['paged']) : 1;
     if (! $grid_id) {
       wp_send_json_error('Invalid grid ID.');
     }
@@ -127,9 +129,11 @@ class SmartGrid_Frontend
     }
 
     // 3) Build a WP_Query
+    $per_page = 10;
     $query = new WP_Query([
       'post_type'     => $post_type,
-      'posts_per_page' => 10,
+      'posts_per_page' => $per_page,
+      'paged'         => $paged,
     ]);
 
     // 4) Render each item using a template part
@@ -162,6 +166,15 @@ class SmartGrid_Frontend
     wp_reset_postdata();
 
     $html = ob_get_clean();
-    wp_send_json_success(['html' => $html]);
+
+    // Determine if there are more pages
+    $has_more = $paged < $query->max_num_pages;
+    $next_page = $paged + 1;
+
+    wp_send_json_success([
+      'html'      => $html,
+      'more'      => $has_more,
+      'next_page' => $next_page,
+    ]);
   }
 }

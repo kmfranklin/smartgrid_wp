@@ -47,3 +47,13 @@
   font-size: 0.9rem;
   margin: 0 1rem 1rem;
 }
+
+.smartgrid-load-more-wrap {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.smartgrid-load-more {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+}
