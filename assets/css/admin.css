@@ -1,0 +1,40 @@
+/* Filters Configuration */
+#smartgrid_filters .filter-row {
+  display: grid;
+  grid-template-columns:
+    /* label + checkbox */
+    minmax(200px 1fr)
+    /* placeholder/extra space */
+    auto
+    /* select dropdown */
+    160px;
+  grid-gap: 0.5em 1em;
+  align-items: center;
+  margin-bottom: 0.5em;
+}
+
+#smartgrid_filters .filter-row label {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+#smartgrid_filters .filter-row select {
+  width: 100%;
+  max-width: 160px;
+}
+
+#smartgrid_filters .filters-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-gap: 0.5em 1em;
+  margin-bottom: 1em;
+}
+
+/* Group headings */
+#smartgrid_filters h4 {
+  margin-top: 1.5em;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0.25em;
+}
