@@ -60,7 +60,8 @@ class SmartGrid_Admin
     // Fetch public CPTs
     $types = get_post_types(['public' => true], 'objects');
 
-    echo '<p><label for="smartgrid_post_type">' . __('Post Type', 'smartgrid') . '</label></p>';
+    echo '<p>';
+    echo '<label for="smartgrid_post_type">' . __('Post Type', 'smartgrid') . '</label><br />';
     echo '<select id="smartgrid_post_type" name="smartgrid_post_type">';
     echo '<option value="">' . __('— Select —', 'smartgrid') . '</option>';
     foreach ($types as $type) {
@@ -71,7 +72,8 @@ class SmartGrid_Admin
         esc_html($type->label)
       );
     }
-    echo '</select></p>';
+    echo '</select>';
+    echo '</p>';
   }
 
   /**
@@ -95,53 +97,105 @@ class SmartGrid_Admin
    */
   public function render_filters_box($post)
   {
+    $post_type = get_post_meta($post->ID, 'smartgrid_post_type', true);
+
     wp_nonce_field('smartgrid_filters_save', 'smartgrid_filters_nonce');
 
     // Load saved values
-    $saved_tax    = (array) get_post_meta($post->ID, 'smartgrid_taxonomies', true);
-    $saved_meta   = (array) get_post_meta($post->ID, 'smartgrid_meta_fields', true);
+    $filters = get_post_meta($post->ID, 'smartgrid_filters', true);
+    $tax_cfg  = $filters['taxonomies'] ?? [];
+    $meta_cfg = $filters['meta']       ?? [];
 
-    // 1) Taxonomy choices
-    $taxes = get_taxonomies(['public' => true], 'objects');
+    // 1) Taxonomy filters
     echo '<h4>' . esc_html__('Taxonomy Filters', 'smartgrid') . '</h4>';
+    $taxes = get_taxonomies(['public' => true], 'objects');
     foreach ($taxes as $tax) {
+      $enabled = ! empty($tax_cfg[$tax->name]['enabled']);
+      $type    = $tax_cfg[$tax->name]['type'] ?? '';
+
       printf(
-        '<label><input type="checkbox" name="smartgrid_taxonomies[]" value="%1$s"%2$s> %3$s</label><br>',
+        '<div class="filter-row">
+         <label>
+           <input type="checkbox"
+                  name="smartgrid_filters[taxonomies][%1$s][enabled]"
+                  %2$s
+           />
+           %3$s
+         </label>
+         <select name="smartgrid_filters[taxonomies][%1$s][type]">
+           <option value="" disabled %4$s>%5$s</option>
+           <option value="dropdown"   %6$s>%7$s</option>
+           <option value="checkboxes" %8$s>%9$s</option>
+         </select>
+       </div>',
         esc_attr($tax->name),
-        in_array($tax->name, $saved_tax, true) ? ' checked' : '',
-        esc_html($tax->label)
+        checked($enabled, true, false),
+        esc_html($tax->label),
+        selected($type, '',         false), // placeholder
+        esc_html__('Select type…',  'smartgrid'),
+        selected($type, 'dropdown',  false),
+        esc_html__('Dropdown',      'smartgrid'),
+        selected($type, 'checkboxes', false),
+        esc_html__('Checkboxes',    'smartgrid')
       );
     }
 
-    // 2) Meta field choices
-    $post_type = get_post_meta($post->ID, 'smartgrid_post_type', true);
+    // 2) Meta field filters
+    echo '<h4>' . esc_html__('Meta Field Filters', 'smartgrid') . '</h4>';
 
+    $post_type = get_post_meta($post->ID, 'smartgrid_post_type', true);
     if ($post_type) {
       global $wpdb;
-      // Grab all distinct meta_keys for this post type, except any hidden keys
       $raw_keys = $wpdb->get_col($wpdb->prepare(
         "SELECT DISTINCT pm.meta_key
-        FROM {$wpdb->postmeta} pm
-        INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
-        WHERE p.post_type = %s
-          AND pm.meta_key NOT LIKE '\_%'
-        ORDER BY pm.meta_key",
+             FROM {$wpdb->postmeta} pm
+             JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+             WHERE p.post_type = %s
+               AND pm.meta_key NOT LIKE '\\_%'
+             ORDER BY pm.meta_key",
         $post_type
       ));
     } else {
       $raw_keys = [];
     }
 
-    echo '<h4>' . esc_html__('Meta Filters', 'smartgrid') . '</h4>';
     if (empty($raw_keys)) {
-      echo '<p>' . esc_html__('No custom fields found for this post type.', 'smartgrid') . '</p>';
+      echo '<p>' . esc_html__('No custom fields found.', 'smartgrid') . '</p>';
     } else {
       foreach ($raw_keys as $key) {
+        $enabled = ! empty($meta_cfg[$key]['enabled']);
+        $type    = $meta_cfg[$key]['type'] ?? '';
+
         printf(
-          '<label><input type="checkbox" name="smartgrid_meta_fields[]" value="%1$s"%2$s> %3$s</label><br>',
+          '<div class="filter-row">
+             <label>
+               <input type="checkbox"
+                      name="smartgrid_filters[meta][%1$s][enabled]"
+                      %2$s
+               />
+               %3$s
+             </label>
+             <select name="smartgrid_filters[meta][%1$s][type]">
+               <option value="" disabled %4$s>%5$s</option>
+               <option value="text"       %6$s>%7$s</option>
+               <option value="dropdown"   %8$s>%9$s</option>
+               <option value="checkboxes" %10$s>%11$s</option>
+               <option value="slider"     %12$s>%13$s</option>
+             </select>
+           </div>',
           esc_attr($key),
-          in_array($key, $saved_meta, true) ? ' checked' : '',
-          esc_html(ucwords(str_replace('_', ' ', $key)))
+          checked($enabled, true, false),
+          esc_html(ucwords(str_replace('_', ' ', $key))),
+          selected($type, '',            false),
+          esc_html__('Select type…',     'smartgrid'),
+          selected($type, 'text',        false),
+          esc_html__('Text',             'smartgrid'),
+          selected($type, 'dropdown',    false),
+          esc_html__('Dropdown',         'smartgrid'),
+          selected($type, 'checkboxes',  false),
+          esc_html__('Checkboxes',       'smartgrid'),
+          selected($type, 'slider',      false),
+          esc_html__('Slider',           'smartgrid')
         );
       }
     }
@@ -172,15 +226,15 @@ class SmartGrid_Admin
   }
 
   /**
-   * Save the selected taxonomy & meta-field filters when a Grid is saved.
-   * 
+   * Save the configured filters when a Grid is saved.
+   *
    * @param int     $post_id The post ID being saved.
    * @param WP_Post $post    The post object.
    * @return void
    */
   public function save_filters_meta($post_id, $post)
   {
-    // Check our nonce
+    // Verify nonce
     if (
       empty($_POST['smartgrid_filters_nonce']) ||
       ! wp_verify_nonce($_POST['smartgrid_filters_nonce'], 'smartgrid_filters_save')
@@ -197,19 +251,45 @@ class SmartGrid_Admin
       return;
     }
 
-    // Sanitize and save taxonomies
-    $taxonomies = array_map(
-      'sanitize_text_field',
-      (array) ($_POST['smartgrid_taxonomies'] ?? [])
-    );
-    update_post_meta($post_id, 'smartgrid_taxonomies', $taxonomies);
+    // Grab the raw filters array (may not exist yet)
+    $raw = $_POST['smartgrid_filters'] ?? [];
 
-    // Sanitize and save meta fields
-    $meta_fields = array_map(
-      'sanitize_text_field',
-      (array) ($_POST['smartgrid_meta_fields'] ?? [])
-    );
-    update_post_meta($post_id, 'smartgrid_meta_fields', $meta_fields);
+    // Prepare a clean structure
+    $clean = [
+      'taxonomies' => [],
+      'meta'       => [],
+    ];
+
+    // Process taxonomy filters
+    if (! empty($raw['taxonomies']) && is_array($raw['taxonomies'])) {
+      foreach ($raw['taxonomies'] as $tax => $cfg) {
+        $enabled = ! empty($cfg['enabled']);
+        $type    = sanitize_text_field($cfg['type'] ?? '');
+        if ($enabled && in_array($type, ['dropdown', 'checkboxes'], true)) {
+          $clean['taxonomies'][$tax] = [
+            'enabled' => true,
+            'type'    => $type,
+          ];
+        }
+      }
+    }
+
+    // Process meta‑field filters
+    if (! empty($raw['meta']) && is_array($raw['meta'])) {
+      foreach ($raw['meta'] as $key => $cfg) {
+        $enabled = ! empty($cfg['enabled']);
+        $type    = sanitize_text_field($cfg['type'] ?? '');
+        if ($enabled && in_array($type, ['text', 'dropdown', 'checkboxes', 'slider'], true)) {
+          $clean['meta'][$key] = [
+            'enabled' => true,
+            'type'    => $type,
+          ];
+        }
+      }
+    }
+
+    // Save the full filters config in one meta key
+    update_post_meta($post_id, 'smartgrid_filters', wp_slash($clean));
   }
 
   /**
