@@ -1,3 +1,5 @@
+console.log('SmartGrid JS loaded');
+
 /**
  * SmartGrid frontend script
  *
@@ -73,6 +75,8 @@ jQuery(function ($) {
     var $loadMoreWrap = $container.siblings('.smartgrid-load-more-wrap');
     var $filterForm = $('.smartgrid-filters[data-grid-id="' + gridId + '"]');
 
+    console.log('Initializing grid #', $container.data('grid-id'));
+
     // Intercept filter form submissions
     $filterForm.on('submit', function (e) {
       e.preventDefault();
@@ -80,7 +84,7 @@ jQuery(function ($) {
     });
 
     // Initial load
-    fetchPage($container, initialPage, false);
+    fetchPage($container, 1, false);
 
     // Delegate View More clicks
     $loadMoreWrap.on('click', '.smartgrid-load-more', function () {
