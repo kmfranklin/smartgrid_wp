@@ -21,6 +21,16 @@ jQuery(function ($) {
       paged: page,
     };
 
+    // Include taxonomy filters
+    var $filterForm = $('.smartgrid-filters[data-grid-id="' + gridId + '"]');
+    $filterForm.find('input[name^="tax"]').each(function () {
+      if (this.checked) {
+        var name = this.name;
+        data[name] = data[name] || [];
+        data[name].push(this.value);
+      }
+    });
+
     // Show loading state on first load
     if (!append) {
       $container.html('<div class="smartgrid-loading">Loading grid...</div>');
@@ -59,8 +69,15 @@ jQuery(function ($) {
   // Initialize each grid on the page
   $('.smartgrid-container').each(function () {
     var $container = $(this);
-    var initialPage = 1;
+    var gridId = $container.data('grid-id');
     var $loadMoreWrap = $container.siblings('.smartgrid-load-more-wrap');
+    var $filterForm = $('.smartgrid-filters[data-grid-id="' + gridId + '"]');
+
+    // Intercept filter form submissions
+    $filterForm.on('submit', function (e) {
+      e.preventDefault();
+      fetchPage($container, 1, false);
+    });
 
     // Initial load
     fetchPage($container, initialPage, false);
