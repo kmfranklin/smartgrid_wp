@@ -26,7 +26,6 @@ class SmartGrid_Admin
     add_action('save_post_smartgrid', [$this, 'save_filters_meta'], 20, 2);
   }
 
-
   /**
    * Register the "Grid Settings" meta-box on the SmartGrid CPT edit screen.
    * 
@@ -170,6 +169,47 @@ class SmartGrid_Admin
     // Sanitize and save
     $pt = sanitize_text_field($_POST['smartgrid_post_type'] ?? '');
     update_post_meta($post_id, 'smartgrid_post_type', $pt);
+  }
+
+  /**
+   * Save the selected taxonomy & meta-field filters when a Grid is saved.
+   * 
+   * @param int     $post_id The post ID being saved.
+   * @param WP_Post $post    The post object.
+   * @return void
+   */
+  public function save_filters_meta($post_id, $post)
+  {
+    // Check our nonce
+    if (
+      empty($_POST['smartgrid_filters_nonce']) ||
+      ! wp_verify_nonce($_POST['smartgrid_filters_nonce'], 'smartgrid_filters_save')
+    ) {
+      return;
+    }
+
+    // Bail on autosave, wrong post type, or insufficient permissions
+    if (
+      defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ||
+      $post->post_type !== 'smartgrid' ||
+      ! current_user_can('edit_post', $post_id)
+    ) {
+      return;
+    }
+
+    // Sanitize and save taxonomies
+    $taxonomies = array_map(
+      'sanitize_text_field',
+      (array) ($_POST['smartgrid_taxonomies'] ?? [])
+    );
+    update_post_meta($post_id, 'smartgrid_taxonomies', $taxonomies);
+
+    // Sanitize and save meta fields
+    $meta_fields = array_map(
+      'sanitize_text_field',
+      (array) ($_POST['smartgrid_meta_fields'] ?? [])
+    );
+    update_post_meta($post_id, 'smartgrid_meta_fields', $meta_fields);
   }
 
   /**
