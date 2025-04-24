@@ -25,11 +25,23 @@ jQuery(function ($) {
 
     // Include taxonomy filters
     var $filterForm = $('.smartgrid-filters[data-grid-id="' + gridId + '"]');
-    $filterForm.find('input[name^="tax"]').each(function () {
-      if (this.checked) {
-        var name = this.name;
+    // collect all taxonomy filters (dropdowns & checkboxes)
+    $filterForm.find('[name^="tax["]').each(function () {
+      var name = this.name; // e.g. "tax[model]" or "tax[beds][]"
+      var value = this.value;
+
+      // skip empty selects
+      if (!value) {
+        return;
+      }
+
+      if (this.type === 'checkbox') {
+        // tax[foo][] => array
         data[name] = data[name] || [];
-        data[name].push(this.value);
+        data[name].push(value);
+      } else {
+        // tax[foo] => single value
+        data[name] = value;
       }
     });
 
