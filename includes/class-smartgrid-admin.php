@@ -153,19 +153,25 @@ class SmartGrid_Admin
       <div class="smartgrid-meta-row">
         <select class="smartgrid-meta-field">
           <option value=""><?php esc_html_e('Select field…', 'smartgrid'); ?></option>
-          <?php foreach ($all_keys as $key): ?>
-            <option value="{{ data.key }}">{{ data.label }}</option>
+          <?php foreach ($all_keys as $field_key) :
+            $label = ucwords(str_replace('_', ' ', $field_key));
+          ?>
+            <option value="<?php echo esc_attr($field_key); ?>">
+              <?php echo esc_html($label); ?>
+            </option>
           <?php endforeach; ?>
         </select>
+
         <select class="smartgrid-meta-type">
-          <option value="text"><?php esc_html_e('Text', 'smartgrid'); ?></option>
-          <option value="dropdown"><?php esc_html_e('Dropdown', 'smartgrid'); ?></option>
+          <option value="text"><?php esc_html_e('Text',       'smartgrid'); ?></option>
+          <option value="dropdown"><?php esc_html_e('Dropdown',   'smartgrid'); ?></option>
           <option value="checkboxes"><?php esc_html_e('Checkboxes', 'smartgrid'); ?></option>
-          <option value="slider"><?php esc_html_e('Slider', 'smartgrid'); ?></option>
+          <option value="slider"><?php esc_html_e('Slider',     'smartgrid'); ?></option>
         </select>
+
         <button class="button smartgrid-meta-remove">x</button>
-        <input type="hidden" name="smartgrid_filters[meta][{{data.key}}][enabled]" value="1" />
-        <input type="hidden" name="smartgrid_filters[meta][{{data.key}}][type]" value="{{data.type}}" />
+        <input type="hidden" name="smartgrid_filters[meta][{{ data.key }}][enabled]" value="1" />
+        <input type="hidden" name="smartgrid_filters[meta][{{ data.key }}][type]" value="{{ data.type }}" />
       </div>
     </script>
     <?php
