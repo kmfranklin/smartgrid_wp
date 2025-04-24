@@ -38,6 +38,14 @@ jQuery(function ($) {
       $container.html('<div class="smartgrid-loading">Loading grid...</div>');
     }
 
+    // Meta‐checkbox filters
+    $filterForm.find('input[type="checkbox"][name^="meta"]').each(function () {
+      if (this.checked) {
+        data[this.name] = data[this.name] || [];
+        data[this.name].push(this.value);
+      }
+    });
+
     $.post(smartgridVars.ajax_url, data, function (res) {
       if (res.success) {
         // Parse the incoming HTML into a jQuery object

@@ -142,6 +142,20 @@ class SmartGrid_Frontend
     $tax_query = [];
     $meta_query = ['relation' => 'AND'];
 
+    // Checkboxes (arrays) for meta
+    if (! empty($_REQUEST['meta']) && is_array($_REQUEST['meta'])) {
+      foreach ($_REQUEST['meta'] as $mkey => $mval) {
+        if (is_array($mval) && count($mval)) {
+          $meta_query[] = [
+            'key'     => $mkey,
+            'value'   => array_map('sanitize_text_field', $mval),
+            'compare' => 'IN',
+            'type'    => 'NUMERIC',
+          ];
+        }
+      }
+    }
+
     // 2c) Process incoming form values from $_REQUEST
     // Taxonomies: expect $_REQUEST['tax'][$taxonomy] as an array of slugs
     if (!empty($_REQUEST['tax']) && is_array($_REQUEST['tax'])) {
@@ -231,6 +245,39 @@ class SmartGrid_Frontend
   }
 
   /**
+   * Return all distinct values for a given meta key on the selected post type.
+   *
+   * @param int    $grid_id  Grid post ID
+   * @param string $meta_key The meta_key to pull values for.
+   * @return string[]        List of unique meta_values.
+   */
+  protected function get_unique_meta_values($grid_id, $meta_key)
+  {
+    global $wpdb;
+    // 1) figure out which post type this grid is configured for
+    $post_type = get_post_meta($grid_id, 'smartgrid_post_type', true);
+    if (! $post_type) {
+      return [];
+    }
+
+    // 2) query distinct meta_values
+    $sql = $wpdb->prepare(
+      "SELECT DISTINCT pm.meta_value
+         FROM {$wpdb->postmeta} pm
+         JOIN {$wpdb->posts} p
+           ON pm.post_id = p.ID
+        WHERE p.post_type  = %s
+          AND pm.meta_key   = %s
+          AND pm.meta_value <> ''
+        ORDER BY pm.meta_value+0 ASC, pm.meta_value ASC",
+      $post_type,
+      $meta_key
+    );
+
+    return (array) $wpdb->get_col($sql);
+  }
+
+  /**
    * Render the filter form for a given grid config.
    * 
    * @param int $grid_id ID of the grid.
@@ -302,11 +349,18 @@ class SmartGrid_Frontend
           break;
 
         case 'checkboxes':
-          // TODO: fetch unique values and loop them
+          $values = $this->get_unique_meta_values($grid_id, $key);
+          foreach ($values as $val) {
+            printf(
+              '<label><input type="checkbox" name="meta[%1$s][]" value="%2$s"> %2$s</label><br>',
+              esc_attr($key),
+              esc_attr($val)
+            );
+          }
           break;
 
         case 'slider':
-          // TODO: output your slider + hidden inputs
+          // TODO: output slider + hidden inputs
           echo '<div class="smartgrid-slider" data-key="' . esc_attr($key) . '"></div>';
           echo '<input type="hidden" name="meta[' . esc_attr($key) . '][min]" value="">';
           echo '<input type="hidden" name="meta[' . esc_attr($key) . '][max]" value="">';
