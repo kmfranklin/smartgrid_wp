@@ -49,11 +49,20 @@ class SmartGrid_Loader
 
     // Only load on SmartGrid edit/add screens
     if (in_array($screen->post_type, ['smartgrid'], true)) {
+
       wp_enqueue_style(
         'smartgrid-admin',
         SMARTGRID_URL . 'assets/css/admin.css',
         [],
         SMARTGRID_VERSION
+      );
+
+      wp_enqueue_script(
+        'smartgrid-admin-js',
+        SMARTGRID_URL . 'assets/js/admin.js',
+        ['jquery', 'wp-util'],
+        SMARTGRID_VERSION,
+        true
       );
     }
   }
