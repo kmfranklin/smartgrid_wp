@@ -63,6 +63,10 @@ jQuery(function ($) {
       paged: page,
     };
 
+    // — Include search term, if present
+    var searchTerm = $form.find('input.smartgrid-search-input').val() || '';
+    data.s = searchTerm;
+
     // — Taxonomy filters (dropdown & checkboxes)
     $form.find('[name^="tax"]').each(function () {
       if (!this.value) return;

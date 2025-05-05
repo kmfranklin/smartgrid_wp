@@ -86,6 +86,17 @@ class SmartGrid_Admin
     );
     echo '<br><em>' . esc_html__('Enter 0 to show all posts', 'smartgrid') . '</em>';
     echo '</p>';
+
+    // "Include Search" option
+    $include_search = get_post_meta($post->ID, 'smartgrid_include_search', true) ? 1 : 0;
+
+    echo '<p>';
+    printf(
+      '<label><input type="checkbox" name="smartgrid_include_search" value="1" %s> %s</label>',
+      checked($include_search, 1, false),
+      esc_html__('Include Search Bar', 'smartgrid')
+    );
+    echo '</p>';
   }
 
   /**
@@ -234,6 +245,13 @@ class SmartGrid_Admin
         'smartgrid_posts_per_page',
         absint($_POST['smartgrid_posts_per_page'])
       );
+    }
+
+    // Include Search Bar?
+    if (isset($_POST['smartgrid_include_search'])) {
+      update_post_meta($post_id, 'smartgrid_include_search', 1);
+    } else {
+      delete_post_meta($post_id, 'smartgrid_include_search');
     }
   }
 

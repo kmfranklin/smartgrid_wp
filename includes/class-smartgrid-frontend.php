@@ -11,7 +11,6 @@ defined('ABSPATH') || exit;
  */
 class SmartGrid_Frontend
 {
-
   public function __construct()
   {
     add_shortcode('smartgrid', [$this, 'shortcode_callback']);
@@ -132,6 +131,12 @@ class SmartGrid_Frontend
       }
     }
 
+    // Use search term if provided
+    if (!empty($_REQUEST['s'])) {
+      $search = sanitize_text_field(wp_unslash($_REQUEST['s']));
+      $args['s'] = $search;
+    }
+
     // Determine per-page (grid admin setting or fallback)
     // If the user explicitly entered “0”, show all posts (=> -1)
     $raw_pp = get_post_meta($grid_id, 'smartgrid_posts_per_page', true);
@@ -150,6 +155,9 @@ class SmartGrid_Frontend
       'post_type'      => $post_type,
       'posts_per_page' => $per_page,
       'paged'          => $paged,
+      's'              => !empty($_REQUEST['s'])
+        ? sanitize_text_field(wp_unslash($_REQUEST['s']))
+        : '',
     ];
     if ($tax_query) {
       $args['tax_query'] = array_merge(['relation' => 'AND'], $tax_query);
@@ -236,7 +244,15 @@ class SmartGrid_Frontend
     ob_start();
     echo '<form class="smartgrid-filters" data-grid-id="' . esc_attr($grid_id) . '">';
 
-    // 2) Taxonomy filters
+    // Show search if admin-enabled
+    if (get_post_meta($grid_id, 'smartgrid_include_search', true)) {
+      echo '<div class="filter-group filter-search">';
+      echo '<input type="search" name="s" class="smartgrid-search-input" placeholder="'
+        . esc_attr__('Search...', 'smartgrid') . '">';
+      echo '</div>';
+    }
+
+    // Taxonomy filters
     foreach ($tax_cfg as $tax => $cfg) {
       if (!$cfg['enabled']) {
         continue;
@@ -274,7 +290,7 @@ class SmartGrid_Frontend
       echo '</div>';
     }
 
-    // 3) Meta field filters
+    // Meta field filters
     foreach ($meta_cfg as $key => $cfg) {
       if (!$cfg['enabled']) {
         continue;
@@ -327,7 +343,7 @@ class SmartGrid_Frontend
       echo '</div>';
     }
 
-    // 4) Submit button
+    // Submit button
     echo '<button type="submit" class="smartgrid-filter-submit">'
       . esc_html__('Apply Filters', 'smartgrid')
       . '</button>';
