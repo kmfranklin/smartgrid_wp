@@ -344,17 +344,24 @@ class SmartGrid_Frontend
         case 'slider':
           list($min, $max) = $this->get_meta_range($grid_id, $key);
 ?>
-          <div class="smartgrid-slider"
-            data-key="<?php echo esc_attr($key); ?>"
-            data-min="<?php echo esc_attr($min); ?>"
-            data-max="<?php echo esc_attr($max); ?>">
+          <div class="smartgrid-slider-wrapper">
+            <div class="smartgrid-slider"
+              data-key="<?php echo esc_attr($key); ?>"
+              data-min="<?php echo esc_attr($min); ?>"
+              data-max="<?php echo esc_attr($max); ?>"></div>
+
+            <div class="smartgrid-slider-controls">
+              <span class="smartgrid-slider-range">
+                <?php echo number_format_i18n($min); ?> &ndash; <?php echo number_format_i18n($max); ?>
+              </span>
+              <button type="button" class="smartgrid-slider-clear">
+                <?php esc_html_e('Clear', 'smartgrid'); ?>
+              </button>
+            </div>
+
+            <input type="hidden" name="meta[<?php echo esc_attr($key); ?>][min]" value="<?php echo esc_attr($min); ?>" />
+            <input type="hidden" name="meta[<?php echo esc_attr($key); ?>][max]" value="<?php echo esc_attr($max); ?>" />
           </div>
-          <input type="hidden"
-            name="meta[<?php echo esc_attr($key); ?>][min]"
-            value="<?php echo esc_attr($min); ?>" />
-          <input type="hidden"
-            name="meta[<?php echo esc_attr($key); ?>][max]"
-            value="<?php echo esc_attr($max); ?>" />
 <?php
           break;
 

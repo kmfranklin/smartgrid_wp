@@ -58,12 +58,23 @@
   font-size: 1rem;
 }
 
+.smartgrid-filters h5 {
+  font-size: 18px;
+  margin-top: 1rem;
+  border-bottom: 1px solid #333;
+}
+
+.smartgrid-filters label,
+.smartgrid-filters select {
+  font-size: 14px;
+}
+
+/* left sidebar */
 .sg-layout-left {
   display: grid;
   gap: 1rem;
 }
 
-/* left sidebar */
 .sg-layout-left {
   grid-template-columns: auto 1fr;
 }
@@ -73,4 +84,63 @@
 .sg-layout-left > .smartgrid-container,
 .sg-layout-left > .smartgrid-load-more-wrap {
   grid-column: 2;
+}
+
+// Slider styles
+.smartgrid-slider-wrapper {
+  margin: 1rem 0;
+  padding: 0.5rem 0;
+}
+
+.smartgrid-slider .noUi-handle {
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 50%;
+  border-color: var(--sg-accent);
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  box-shadow: none;
+  cursor: grab;
+}
+
+.smartgrid-slider .noUi-connect {
+  background: var(--sg-accent);
+}
+
+/* On hover/focus, give a subtle glow */
+.smartgrid-slider .noUi-handle:hover,
+.smartgrid-slider .noUi-handle:focus {
+  border-color: var(--sg-accent-hover);
+}
+
+.noUi-connect,
+.noUi-connects,
+.smartgrid-slider {
+  height: 2px !important;
+}
+
+.noUi-handle::before,
+.noUi-handle::after {
+  display: none !important;
+}
+
+/* Range text & Clear button */
+.smartgrid-slider-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.smartgrid-slider-range {
+  flex: 1;
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.smartgrid-slider-clear {
+  flex-shrink: 0;
+  padding: 0.4em 0.8em;
 }
