@@ -97,6 +97,23 @@ class SmartGrid_Admin
       esc_html__('Include Search Bar', 'smartgrid')
     );
     echo '</p>';
+
+    // Get saved layout or default to "above"
+    $layout = get_post_meta($post->ID, 'smartgrid_filter_layout', true) ?: 'above';
+
+    echo '<p>';
+    echo '<label for="smartgrid_filter_layout">' . esc_html__('Filter Layout', 'smartgrid') . '</label>';
+    echo '<select id="smartgrid_filter_layout" name="smartgrid_filter_layout">';
+    foreach (['above' => 'Above grid', 'left' => 'Left sidebar', 'right' => 'Right sidebar'] as $key => $label) {
+      printf(
+        '<option value="%1$s"%2$s>%3$s</option>',
+        esc_attr($key),
+        selected($layout, $key, false),
+        esc_html($label)
+      );
+    }
+    echo '</select>';
+    echo '</p>';
   }
 
   /**
@@ -245,6 +262,11 @@ class SmartGrid_Admin
         'smartgrid_posts_per_page',
         absint($_POST['smartgrid_posts_per_page'])
       );
+    }
+
+    // Save selected filter layout
+    if (isset($_POST['smartgrid_filter_layout'])) {
+      update_post_meta($post_id, 'smartgrid_filter_layout', sanitize_text_field($_POST['smartgrid_filter_layout']));
     }
 
     // Include Search Bar?
