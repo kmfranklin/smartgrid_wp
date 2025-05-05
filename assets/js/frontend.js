@@ -1,113 +1,147 @@
-console.log('SmartGrid JS loaded');
-
 /**
  * SmartGrid frontend script
  *
- * Handles initial AJAX load and "View More" pagination for each [smartgrid] instance
+ * Handles AJAX grid loading, filtering, pagination, and noUiSlider initialization.
  *
- * @requires jQuery
+ * @requires jQuery, noUiSlider
  */
 jQuery(function ($) {
   /**
-   * Fetch a page of items via AJAX.
+   * Initialize all noUiSlider instances on the page.
+   * Also called after each AJAX refresh to bind new sliders.
+   */
+  function initSliders() {
+    $('.smartgrid-slider').each(function () {
+      var sliderEl = this;
+      var $slider = $(this);
+      var key = $slider.data('key');
+      var min = parseFloat($slider.data('min'));
+      var max = parseFloat($slider.data('max'));
+
+      // Prevent double-init
+      if (sliderEl.noUiSlider) {
+        return;
+      }
+
+      noUiSlider.create(sliderEl, {
+        start: [min, max],
+        connect: true,
+        range: { min: min, max: max },
+        tooltips: [true, true],
+        format: {
+          to: function (v) {
+            return Math.round(v);
+          },
+          from: function (v) {
+            return Number(v);
+          },
+        },
+      });
+
+      // Push slider values into the hidden inputs
+      sliderEl.noUiSlider.on('update', function (values) {
+        var $form = $slider.closest('form');
+        $form.find('input[name="meta[' + key + '][min]"]').val(values[0]);
+        $form.find('input[name="meta[' + key + '][max]"]').val(values[1]);
+      });
+    });
+  }
+
+  /**
+   * Perform the AJAX request to fetch grid items.
    *
-   * @param {jQuery} $container The grid container element.
-   * @param {number} page       The page number to fetch.
-   * @param {boolean} append    Whether to append to existing items.
+   * @param {jQuery}  $container The grid container element.
+   * @param {number}  page       The page number to fetch.
+   * @param {boolean} append     Whether to append to existing items.
    */
   function fetchPage($container, page, append) {
     var gridId = $container.data('grid-id');
+    var $form = $('.smartgrid-filters[data-grid-id="' + gridId + '"]');
     var data = {
       action: 'smartgrid_fetch',
       grid_id: gridId,
       paged: page,
     };
 
-    // Include taxonomy filters
-    var $filterForm = $('.smartgrid-filters[data-grid-id="' + gridId + '"]');
-    // collect all taxonomy filters (dropdowns & checkboxes)
-    $filterForm.find('[name^="tax["]').each(function () {
-      var name = this.name; // e.g. "tax[model]" or "tax[beds][]"
-      var value = this.value;
-
-      // skip empty selects
-      if (!value) {
-        return;
-      }
-
+    // — Taxonomy filters (dropdown & checkboxes)
+    $form.find('[name^="tax"]').each(function () {
+      if (!this.value) return;
       if (this.type === 'checkbox') {
-        // tax[foo][] => array
-        data[name] = data[name] || [];
-        data[name].push(value);
+        data[this.name] = data[this.name] || [];
+        data[this.name].push(this.value);
       } else {
-        // tax[foo] => single value
-        data[name] = value;
+        data[this.name] = this.value;
       }
     });
 
-    // Show loading state on first load
+    // — Meta checkboxes
+    $form.find('[name^="meta"][type="checkbox"]').each(function () {
+      if (!this.checked) return;
+      data[this.name] = data[this.name] || [];
+      data[this.name].push(this.value);
+    });
+
+    $form.find('input[type="hidden"][name^="meta"]').each(function () {
+      data[this.name] = this.value;
+    });
+
+    // Show loading on first load
     if (!append) {
       $container.html('<div class="smartgrid-loading">Loading grid...</div>');
     }
 
-    // Meta‐checkbox filters
-    $filterForm.find('input[type="checkbox"][name^="meta"]').each(function () {
-      if (this.checked) {
-        data[this.name] = data[this.name] || [];
-        data[this.name].push(this.value);
-      }
-    });
-
     $.post(smartgridVars.ajax_url, data, function (res) {
-      if (res.success) {
-        // Parse the incoming HTML into a jQuery object
-        var $response = $(res.data.html);
-        var $items = $response.filter('.smartgrid-items').add($response.find('.smartgrid-items'));
-
-        if (append) {
-          // Append only the children (individual cards)
-          $container.find('.smartgrid-items').append($items.children());
-        } else {
-          // Replace the container with the new items wrapper
-          $container.html($items);
-        }
-
-        // Update the page counter
-        $container.data('page', res.data.next_page);
-
-        // Render or remove the Load More button
-        var $loadMoreWrap = $container.siblings('.smartgrid-load-more-wrap');
-        if (res.data.more) {
-          $loadMoreWrap.html('<button class="smartgrid-load-more">View More</button>');
-        } else {
-          $loadMoreWrap.empty();
-        }
-      } else {
+      if (!res.success) {
         $container.html('<p class="smartgrid-error">' + res.data + '</p>');
+        return;
       }
+
+      var $html = $(res.data.html);
+      var $items = $html.filter('.smartgrid-items').add($html.find('.smartgrid-items'));
+      var $loadWrap = $container.siblings('.smartgrid-load-more-wrap');
+
+      if (append) {
+        $container.find('.smartgrid-items').append($items.children());
+      } else {
+        $container.html($items);
+      }
+
+      // Update pagination state
+      $container.data('page', res.data.next_page);
+
+      // Render or remove the Load More button
+      if (res.data.more) {
+        $loadWrap.html('<button class="smartgrid-load-more">View More</button>');
+      } else {
+        $loadWrap.empty();
+      }
+
+      // Re-init any sliders in the newly loaded content
+      initSliders();
     });
   }
 
-  // Initialize each grid on the page
+  // — Initial slider setup on page load
+  initSliders();
+
+  // — Hook up each [smartgrid] instance on the page
   $('.smartgrid-container').each(function () {
     var $container = $(this);
     var gridId = $container.data('grid-id');
-    var $loadMoreWrap = $container.siblings('.smartgrid-load-more-wrap');
-    var $filterForm = $('.smartgrid-filters[data-grid-id="' + gridId + '"]');
+    var $loadWrap = $container.siblings('.smartgrid-load-more-wrap');
+    var $form = $('.smartgrid-filters[data-grid-id="' + gridId + '"]');
 
-    console.log('Initializing grid #', $container.data('grid-id'));
-
-    // Intercept filter form submissions
-    $filterForm.on('submit', function (e) {
+    // Intercept filter form submit
+    $form.on('submit', function (e) {
       e.preventDefault();
       fetchPage($container, 1, false);
     });
 
-    // Initial load
+    // Initial load (page 1)
     fetchPage($container, 1, false);
 
-    // Delegate View More clicks
-    $loadMoreWrap.on('click', '.smartgrid-load-more', function () {
+    // Delegate click on dynamically-added "View More" button
+    $loadWrap.on('click', '.smartgrid-load-more', function () {
       var nextPage = $container.data('page') || 2;
       fetchPage($container, nextPage, true);
     });
