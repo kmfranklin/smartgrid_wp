@@ -54,7 +54,7 @@ jQuery(function ($) {
    * @param {number}  page       The page number to fetch.
    * @param {boolean} append     Whether to append to existing items.
    */
-  function fetchPage($container, page, append) {
+  function fetchPage($container, page, append, showLoader = true) {
     var gridId = $container.data('grid-id');
     var $form = $('.smartgrid-filters[data-grid-id="' + gridId + '"]');
     var data = {
@@ -90,7 +90,7 @@ jQuery(function ($) {
     });
 
     // Show loading on first load
-    if (!append) {
+    if (showLoader && !append) {
       $container.html('<div class="smartgrid-loading">Loading grid...</div>');
     }
 
@@ -138,7 +138,15 @@ jQuery(function ($) {
     // Intercept filter form submit
     $form.on('submit', function (e) {
       e.preventDefault();
-      fetchPage($container, 1, false);
+      fetchPage($container, 1, false, true);
+    });
+
+    var searchTimer;
+    $form.on('input', 'input.smartgrid-search-input', function () {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () {
+        fetchPage($container, 1, false, false);
+      }, 300);
     });
 
     // Initial load (page 1)
@@ -147,7 +155,7 @@ jQuery(function ($) {
     // Delegate click on dynamically-added "View More" button
     $loadWrap.on('click', '.smartgrid-load-more', function () {
       var nextPage = $container.data('page') || 2;
-      fetchPage($container, nextPage, true);
+      fetchPage($container, nextPage, true, true);
     });
   });
 });
