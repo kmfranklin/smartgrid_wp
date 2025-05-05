@@ -21,22 +21,45 @@ class SmartGrid_Frontend
 
   public function shortcode_callback($atts)
   {
-    $atts = shortcode_atts(['id' => 0], $atts, 'smartgrid');
+    $atts    = shortcode_atts(['id' => 0], $atts, 'smartgrid');
     $grid_id = absint($atts['id']);
-    if (!$grid_id) {
+    if (! $grid_id) {
       return '<!-- SmartGrid: missing or invalid id -->';
     }
 
-    // Render filters + container
-    $output  = $this->render_filters($grid_id);
+    // 1) Figure out layout
+    $layout = get_post_meta($grid_id, 'smartgrid_filter_layout', true) ?: 'above';
+
+    // 2) Open outer wrapper
+    $output  = sprintf(
+      '<div class="smartgrid-wrapper sg-layout-%1$s">',
+      esc_attr($layout)
+    );
+
+    // 3) Render filters
+    $output .= $this->render_filters($grid_id);
+
+    // 4) Open the “main” column (holds both grid & load‑more)
+    $output .= sprintf(
+      '<div class="smartgrid-main" data-grid-id="%1$d">',
+      $grid_id
+    );
+
+    // 5) Render the actual grid container, with the ID & loading placeholder
     $output .= sprintf(
       '<div class="smartgrid-container" data-grid-id="%1$d" data-page="1">'
         . '<div class="smartgrid-loading">%2$s</div>'
-        . '</div>'
-        . '<div class="smartgrid-load-more-wrap"></div>',
+        . '</div>',
       $grid_id,
       esc_html__('Loading grid...', 'smartgrid')
     );
+
+    // 6) Render the load-more wrapper
+    $output .= '<div class="smartgrid-load-more-wrap"></div>';
+
+    // 7) Close the .smartgrid-main and .smartgrid-wrapper
+    $output .= '</div>'; // .smartgrid-main
+    $output .= '</div>'; // .smartgrid-wrapper
 
     return $output;
   }

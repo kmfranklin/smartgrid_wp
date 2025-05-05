@@ -104,7 +104,7 @@ class SmartGrid_Admin
     echo '<p>';
     echo '<label for="smartgrid_filter_layout">' . esc_html__('Filter Layout', 'smartgrid') . '</label>';
     echo '<select id="smartgrid_filter_layout" name="smartgrid_filter_layout">';
-    foreach (['above' => 'Above grid', 'left' => 'Left sidebar', 'right' => 'Right sidebar'] as $key => $label) {
+    foreach (['above' => 'Above grid', 'left' => 'Left sidebar'] as $key => $label) {
       printf(
         '<option value="%1$s"%2$s>%3$s</option>',
         esc_attr($key),
