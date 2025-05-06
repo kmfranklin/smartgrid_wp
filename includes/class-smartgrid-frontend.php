@@ -27,25 +27,44 @@ class SmartGrid_Frontend
       return '<!-- SmartGrid: missing or invalid id -->';
     }
 
-    // 1) Figure out layout
-    $layout = get_post_meta($grid_id, 'smartgrid_filter_layout', true) ?: 'above';
+    // 1) Determine layout & colors
+    $layout       = get_post_meta($grid_id, 'smartgrid_filter_layout', true) ?: 'above';
+    $accent       = get_post_meta($grid_id, 'smartgrid_accent_color', true) ?: '#ff2041';
+    $accent_hover = $accent;
+    $btn_bg     = get_post_meta($grid_id, 'smartgrid_button_bg', true)   ?: '#00a3b8';
+    $btn_color  = get_post_meta($grid_id, 'smartgrid_button_color', true) ?: '#ffffff';
+    $h_color    = get_post_meta($grid_id, 'smartgrid_heading_color', true)     ?: '#333333';
+    $h_underline = get_post_meta($grid_id, 'smartgrid_heading_underline', true) ?: $h_color;
 
-    // 2) Open outer wrapper
-    $output  = sprintf(
-      '<div class="smartgrid-wrapper sg-layout-%1$s">',
-      esc_attr($layout)
+    // 2) Open outer wrapper with CSS vars
+    $output = sprintf(
+      '<div class="smartgrid-wrapper sg-layout-%1$s" style="
+     --sg-accent: %2$s;
+     --sg-accent-hover: %3$s;
+     --sg-btn-bg: %4$s;
+     --sg-btn-color: %5$s;
+     --sg-heading-color: %6$s;
+     --sg-heading-underline: %7$s;
+   ">',
+      esc_attr($layout),
+      esc_attr($accent),
+      esc_attr($accent_hover),
+      esc_attr($btn_bg),
+      esc_attr($btn_color),
+      esc_attr($h_color),
+      esc_attr($h_underline)
     );
 
     // 3) Render filters
     $output .= $this->render_filters($grid_id);
 
-    // 4) Open the “main” column (holds both grid & load‑more)
+    // 4) Wrap main area (grid + load-more)
     $output .= sprintf(
       '<div class="smartgrid-main" data-grid-id="%1$d">',
       $grid_id
     );
 
-    // 5) Render the actual grid container, with the ID & loading placeholder
+    // 5) Grid container + loading placeholder
     $output .= sprintf(
       '<div class="smartgrid-container" data-grid-id="%1$d" data-page="1">'
         . '<div class="smartgrid-loading">%2$s</div>'
@@ -54,15 +73,16 @@ class SmartGrid_Frontend
       esc_html__('Loading grid...', 'smartgrid')
     );
 
-    // 6) Render the load-more wrapper
+    // 6) Load-more wrapper
     $output .= '<div class="smartgrid-load-more-wrap"></div>';
 
-    // 7) Close the .smartgrid-main and .smartgrid-wrapper
+    // 7) Close wrappers
     $output .= '</div>'; // .smartgrid-main
     $output .= '</div>'; // .smartgrid-wrapper
 
     return $output;
   }
+
 
   public function enqueue_assets()
   {
@@ -354,15 +374,15 @@ class SmartGrid_Frontend
               <span class="smartgrid-slider-range">
                 <?php echo number_format_i18n($min); ?> &ndash; <?php echo number_format_i18n($max); ?>
               </span>
-              <button type="button" class="smartgrid-slider-clear">
-                <?php esc_html_e('Clear', 'smartgrid'); ?>
+              <button type="button" class="smartgrid-slider-clear button">
+                <?php esc_html_e('Clear', 'smartgrid') ?>
               </button>
             </div>
 
             <input type="hidden" name="meta[<?php echo esc_attr($key); ?>][min]" value="<?php echo esc_attr($min); ?>" />
             <input type="hidden" name="meta[<?php echo esc_attr($key); ?>][max]" value="<?php echo esc_attr($max); ?>" />
           </div>
-<?php
+    <?php
           break;
 
         default: // text
@@ -372,12 +392,13 @@ class SmartGrid_Frontend
 
       echo '</div>';
     }
+    ?>
 
-    // Submit button
-    echo '<button type="submit" class="smartgrid-filter-submit">'
-      . esc_html__('Apply Filters', 'smartgrid')
-      . '</button>';
+    <button type="submit" class="smartgrid-filter-submit button">
+      <?php esc_html_e('Apply Filters', 'smartgrid') ?>
+    </button>
 
+<?php
     echo '</form>';
     return ob_get_clean();
   }

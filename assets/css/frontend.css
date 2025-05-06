@@ -61,7 +61,8 @@
 .smartgrid-filters h5 {
   font-size: 18px;
   margin-top: 1rem;
-  border-bottom: 1px solid #333;
+  color: var(--sg-heading-color);
+  border-bottom: 1px solid var(--sg-heading-underline);
 }
 
 .smartgrid-filters label,
@@ -107,7 +108,6 @@
   background: var(--sg-accent);
 }
 
-/* On hover/focus, give a subtle glow */
 .smartgrid-slider .noUi-handle:hover,
 .smartgrid-slider .noUi-handle:focus {
   border-color: var(--sg-accent-hover);
@@ -138,9 +138,4 @@
   color: #333;
   white-space: nowrap;
   font-size: 14px;
-}
-
-.smartgrid-slider-clear {
-  flex-shrink: 0;
-  padding: 0.4em 0.8em;
 }

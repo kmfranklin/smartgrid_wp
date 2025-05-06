@@ -38,3 +38,17 @@
   border-bottom: 1px solid #ccc;
   padding-bottom: 0.25em;
 }
+
+.smartgrid_meta_box {
+  display: flex;
+  gap: 2rem;
+}
+
+.smartgrid_settings_column,
+.smartgrid_colors_column {
+  flex: 1;
+}
+
+.smartgrid_meta_box .form-table {
+  width: 100%;
+}

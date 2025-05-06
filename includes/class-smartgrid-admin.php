@@ -48,72 +48,118 @@ class SmartGrid_Admin
    * @param WP_Post $post The current post object.
    * @return void
    */
-  public function render_settings_box($post)
+  public function render_settings_box(WP_Post $post)
   {
-    // Nonce for security
-    wp_nonce_field('smartgrid_save', 'smartgrid_nonce');
-
-    // Retrieve existing values
-    $selected_pt = get_post_meta($post->ID, 'smartgrid_post_type', true) ?: '';
-    $per_page = get_post_meta($post->ID, 'smartgrid_posts_per_page', true);
+    // Grab all our values up‐front
+    $selected_pt     = get_post_meta($post->ID, 'smartgrid_post_type', true) ?: '';
+    $per_page        = get_post_meta($post->ID, 'smartgrid_posts_per_page', true);
     if ($per_page === '') {
       $per_page = 10;
     }
+    $include_search  = get_post_meta($post->ID, 'smartgrid_include_search', true) ? 1 : 0;
+    $layout          = get_post_meta($post->ID, 'smartgrid_filter_layout', true) ?: 'above';
+    $accent          = get_post_meta($post->ID, 'smartgrid_accent_color', true) ?: '#ff2041';
+    $h_color         = get_post_meta($post->ID, 'smartgrid_heading_color', true) ?: '#333333';
+    $h_underline     = get_post_meta($post->ID, 'smartgrid_heading_underline', true) ?: '#333333';
+    wp_nonce_field('smartgrid_save', 'smartgrid_nonce');
+?>
 
-    // Post type selector
-    echo '<p>';
-    echo '<label for="smartgrid_post_type">' . __('Post Type', 'smartgrid') . '</label><br>';
-    echo '<select id="smartgrid_post_type" name="smartgrid_post_type">';
-    echo '<option value="">' . __('— Select —', 'smartgrid') . '</option>';
-    $types = get_post_types(['public' => true], 'objects');
-    foreach ($types as $type) {
-      printf(
-        '<option value="%1$s" %2$s>%3$s</option>',
-        esc_attr($type->name),
-        selected($selected_pt, $type->name, false),
-        esc_html($type->label)
-      );
-    }
-    echo '</select>';
-    echo '</p>';
+    <div class="smartgrid_meta_box">
+      <!-- LEFT COLUMN -->
+      <div class="smartgrid_settings_column">
+        <table class="form-table">
+          <tbody>
+            <tr>
+              <th><label for="smartgrid_post_type"><?php esc_html_e('Post Type', 'smartgrid') ?></label></th>
+              <td>
+                <select id="smartgrid_post_type" name="smartgrid_post_type">
+                  <option value=""><?php esc_html_e('— Select —', 'smartgrid') ?></option>
+                  <?php foreach (get_post_types(['public' => true], 'objects') as $type) : ?>
+                    <option value="<?= esc_attr($type->name) ?>"
+                      <?= selected($selected_pt, $type->name, false) ?>>
+                      <?= esc_html($type->label) ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </td>
+            </tr>
 
-    // Posts per page input
-    echo '<p>';
-    echo '<label for="smartgrid_posts_per_page">' . __('Posts per page', 'smartgrid') . '</label><br>';
-    echo sprintf(
-      '<input type="number" id="smartgrid_posts_per_page" name="smartgrid_posts_per_page" value="%s" min="0">',
-      esc_attr($per_page)
-    );
-    echo '<br><em>' . esc_html__('Enter 0 to show all posts', 'smartgrid') . '</em>';
-    echo '</p>';
+            <tr>
+              <th><label for="smartgrid_posts_per_page"><?php esc_html_e('Posts per page', 'smartgrid') ?></label></th>
+              <td>
+                <input type="number"
+                  id="smartgrid_posts_per_page"
+                  name="smartgrid_posts_per_page"
+                  value="<?= esc_attr($per_page) ?>"
+                  min="0">
+                <p class="description"><?php esc_html_e('Enter 0 to show all posts', 'smartgrid') ?></p>
+              </td>
+            </tr>
 
-    // "Include Search" option
-    $include_search = get_post_meta($post->ID, 'smartgrid_include_search', true) ? 1 : 0;
+            <tr>
+              <th><?php esc_html_e('Include Search?', 'smartgrid') ?></th>
+              <td>
+                <label>
+                  <input type="checkbox"
+                    name="smartgrid_include_search"
+                    value="1"
+                    <?= checked($include_search, 1, false) ?>>
+                  <?php esc_html_e('Yes, show a search box', 'smartgrid') ?>
+                </label>
+              </td>
+            </tr>
 
-    echo '<p>';
-    printf(
-      '<label><input type="checkbox" name="smartgrid_include_search" value="1" %s> %s</label>',
-      checked($include_search, 1, false),
-      esc_html__('Include Search Bar', 'smartgrid')
-    );
-    echo '</p>';
+            <tr>
+              <th><label for="smartgrid_filter_layout"><?php esc_html_e('Filter Layout', 'smartgrid') ?></label></th>
+              <td>
+                <select id="smartgrid_filter_layout" name="smartgrid_filter_layout">
+                  <option value="above" <?= selected($layout, 'above', false) ?>><?php esc_html_e('Above grid', 'smartgrid') ?></option>
+                  <option value="left" <?= selected($layout, 'left',  false) ?>><?php esc_html_e('Left sidebar', 'smartgrid') ?></option>
+                </select>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-    // Get saved layout or default to "above"
-    $layout = get_post_meta($post->ID, 'smartgrid_filter_layout', true) ?: 'above';
+      <!-- RIGHT COLUMN -->
+      <div class="smartgrid_colors_column">
+        <h4><?php esc_html_e('Grid Colors', 'smartgrid') ?></h4>
+        <table class="form-table">
+          <tbody>
+            <tr>
+              <th><label for="smartgrid_accent_color"><?php esc_html_e('Accent Color', 'smartgrid') ?></label></th>
+              <td>
+                <input type="color"
+                  id="smartgrid_accent_color"
+                  name="smartgrid_accent_color"
+                  value="<?= esc_attr($accent) ?>">
+              </td>
+            </tr>
+            <tr>
+              <th><label for="smartgrid_heading_color"><?php esc_html_e('Heading Text', 'smartgrid') ?></label></th>
+              <td>
+                <input type="color"
+                  id="smartgrid_heading_color"
+                  name="smartgrid_heading_color"
+                  value="<?= esc_attr($h_color) ?>">
+              </td>
+            </tr>
+            <tr>
+              <th><label for="smartgrid_heading_underline"><?php esc_html_e('Heading Underline', 'smartgrid') ?></label></th>
+              <td>
+                <input type="color"
+                  id="smartgrid_heading_underline"
+                  name="smartgrid_heading_underline"
+                  value="<?= esc_attr($h_underline) ?>">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-    echo '<p>';
-    echo '<label for="smartgrid_filter_layout">' . esc_html__('Filter Layout', 'smartgrid') . '</label>';
-    echo '<select id="smartgrid_filter_layout" name="smartgrid_filter_layout">';
-    foreach (['above' => 'Above grid', 'left' => 'Left sidebar'] as $key => $label) {
-      printf(
-        '<option value="%1$s"%2$s>%3$s</option>',
-        esc_attr($key),
-        selected($layout, $key, false),
-        esc_html($label)
-      );
-    }
-    echo '</select>';
-    echo '</p>';
+  <?php
   }
 
   /**
@@ -180,7 +226,7 @@ class SmartGrid_Admin
     ));
 
     // 4) JS repeater template
-?>
+  ?>
     <script type="text/html" id="tmpl-smartgrid-meta-row">
       <div class="smartgrid-meta-row">
         <select class="smartgrid-meta-field">
@@ -274,6 +320,29 @@ class SmartGrid_Admin
       update_post_meta($post_id, 'smartgrid_include_search', 1);
     } else {
       delete_post_meta($post_id, 'smartgrid_include_search');
+    }
+
+    // Save accent color
+    if (isset($_POST['smartgrid_accent_color'])) {
+      update_post_meta(
+        $post_id,
+        'smartgrid_accent_color',
+        sanitize_hex_color($_POST['smartgrid_accent_color'])
+      );
+    }
+
+    // Button & heading colors
+    if (isset($_POST['smartgrid_button_bg'])) {
+      update_post_meta($post_id, 'smartgrid_button_bg', sanitize_hex_color($_POST['smartgrid_button_bg']));
+    }
+    if (isset($_POST['smartgrid_button_color'])) {
+      update_post_meta($post_id, 'smartgrid_button_color', sanitize_hex_color($_POST['smartgrid_button_color']));
+    }
+    if (isset($_POST['smartgrid_heading_color'])) {
+      update_post_meta($post_id, 'smartgrid_heading_color', sanitize_hex_color($_POST['smartgrid_heading_color']));
+    }
+    if (isset($_POST['smartgrid_heading_underline'])) {
+      update_post_meta($post_id, 'smartgrid_heading_underline', sanitize_hex_color($_POST['smartgrid_heading_underline']));
     }
   }
 
